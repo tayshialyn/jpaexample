@@ -1,10 +1,12 @@
 package com.sctp.fsd.jpa.controller;
 
+import com.sctp.fsd.jpa.exceptions.ResourceNotFoundException;
 import com.sctp.fsd.jpa.model.Customer;
 import com.sctp.fsd.jpa.repository.CustomerRepository;
 import com.sctp.fsd.jpa.service.CustomerService;
 import com.sctp.fsd.jpa.service.CustomerServiceInterface;
 import jakarta.annotation.Nullable;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,8 +28,7 @@ public class CustomerController {
     //  Add a new customer
 
     @PostMapping(path = "/add")
-    public ResponseEntity<Object> addNewCustomer(@RequestBody Customer toAddCustomer)
-            throws Exception {
+    public ResponseEntity<Object> addNewCustomer(@Valid @RequestBody Customer toAddCustomer) throws Exception {
         try {
             Optional<Customer> createdCustomer = customerServiceInterface.createCustomer(toAddCustomer);
             if (createdCustomer.isEmpty())
@@ -76,41 +77,41 @@ public class CustomerController {
         try {
             List<Customer> customers = customerServiceInterface.getCustomers();
             if (customers.isEmpty()) {
-                throw new Exception("No customer(s) found.");
+                throw new ResourceNotFoundException("all");
             }
             return new ResponseEntity<>(customers, HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        } catch (ResourceNotFoundException e) {
+          throw new RuntimeException(e);
         }
     }
 
     //TODO:
 // Implemented
 // Update customer by id
-    @PutMapping("{id}")
-    public ResponseEntity<Object> updateCustomerById(@PathVariable("id") Integer id, @RequestBody Customer customer) throws Exception {
+    @PutMapping("/{id}")
+    public ResponseEntity<Object> updateCustomerById(@PathVariable("id") Integer id, @Valid @RequestBody Customer toUpdateCustomer) throws Exception {
         try {
-            Optional<Customer> result = customerServiceInterface.updateCustomer(id, customer);
-            if (result.isEmpty()) {
-                throw new Exception("Unable to update Customer.");
+            Optional<Customer> customer = customerServiceInterface.updateCustomer(id, toUpdateCustomer);
+            if (customer.isEmpty()) {
+                throw new Exception("Customer not updated.");
             }
-            return new ResponseEntity<>(result, HttpStatus.OK);
+            return new ResponseEntity<>(customer, HttpStatus.OK);
         } catch (Exception e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>("Customer is not found.", HttpStatus.NOT_FOUND);
         }
     }
 
     // TODO
     //  Implemented
     //  Delete customer by id
-    @DeleteMapping("{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<Object> deleteCustomerById(@PathVariable("id") Integer id) throws Exception {
         try {
             boolean removed = customerServiceInterface.removeCustomer(id);
             if (!removed) {
                 throw new Exception("Customer not removed or not found.");
             }
-           return new ResponseEntity<>("Customer deleted.", HttpStatus.NO_CONTENT);
+            return new ResponseEntity<>("Customer deleted.", HttpStatus.NO_CONTENT);
 
         } catch (Exception e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
@@ -125,15 +126,18 @@ public class CustomerController {
         try {
             Optional<Customer> customer = customerServiceInterface.getCustomer(id);
             if (customer.isEmpty()) {
-                throw new Exception("Customer not found.");
+                throw new ResourceNotFoundException(id.toString());
+//                throw new Exception("Customer not found.");
             }
             return new ResponseEntity<>(customer, HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        } catch (ResourceNotFoundException e) {
+            throw new RuntimeException(e);
         }
-    }
+//        } catch (Exception e) {
+//            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        }
 
-    @GetMapping ("/count")
+    @GetMapping("/count")
     public ResponseEntity<Object> getCustomerCount() throws Exception {
         long count = customerServiceInterface.countCustomers();
         return new ResponseEntity<>(count, HttpStatus.OK);

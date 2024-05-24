@@ -1,6 +1,9 @@
 package com.sctp.fsd.jpa.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 @Entity
 @Table(name="customer")
@@ -9,10 +12,15 @@ public class Customer {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Integer id;
     @Column(name="name", nullable = false)  // TODO :  Implemented - name cannot be null
+    @NotBlank(message = "Customer name cannot be blank.")  // TODO: Implemented - name cannot be blank
+    @NotNull(message = " Customer name cannot be null.")  // TODO: Implemented - name cannot be null
     String name;
 
     @Column(name="email", nullable = false, unique = true) // TODO :  Implemented - email cannot be null
+    @NotBlank(message = "Customer email cannot be blank.") // TODO: Implemented - name cannot be blank
+    @Email(message = "Email is not valid.")
     String email;
+
     @Column(name="phone")
     String phone;
 
